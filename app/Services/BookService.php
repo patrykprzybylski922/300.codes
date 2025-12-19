@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Book;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use App\Jobs\UpdateAuthorLastBookTitle;
+use Illuminate\Support\Facades\DB;
 
 class BookService
 {
@@ -19,10 +21,16 @@ class BookService
 
     public function create(array $data): Book
     {
-        $book = Book::create($data);
-        $book->authors()->sync($data['authors']);
+        return DB::transaction(function () use ($data) {
 
-        return $this->findWithAuthors($book);
+            $book = Book::create($data);
+            $book->authors()->sync($data['authors']);
+
+            // Job after save data
+            UpdateAuthorLastBookTitle::dispatch($book->id);
+
+            return $this->findWithAuthors($book);
+        });
     }
 
     public function update(Book $book, array $data): Book
