@@ -7,6 +7,7 @@ use App\Http\Resources\AuthorResource;
 use App\Models\Author;
 use App\Services\AuthorService;
 use App\Http\Requests\Author\StoreAuthorRequest;
+use Illuminate\Http\Request;
 
 class AuthorController extends Controller
 {
@@ -14,10 +15,13 @@ class AuthorController extends Controller
         private AuthorService $service
     ) {}
 
-    public function index()
+    public function index(Request $request)
     {
         return AuthorResource::collection(
-            $this->service->paginateWithBooks()
+            $this->service->paginateWithBooks(
+                perPage: 15,
+                search: $request->query('search')
+            )
         );
     }
 
