@@ -6,6 +6,8 @@ use App\Models\Author;
 use App\Models\Book;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use App\Models\User;
+use Laravel\Sanctum\Sanctum;
 
 class BookApiTest extends TestCase
 {
@@ -15,14 +17,17 @@ class BookApiTest extends TestCase
     public function it_creates_a_book()
     {
         // given
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
         $author = Author::create([
             'first_name' => 'George',
-            'last_name' => 'Orwell',
+            'last_name'  => 'Orwell',
         ]);
 
         $payload = [
-            'title' => '1984',
-            'year' => 1949,
+            'title'   => '1984',
+            'year'    => 1949,
             'authors' => [$author->id],
         ];
 
