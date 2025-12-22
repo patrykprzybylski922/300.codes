@@ -1,59 +1,192 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 📚 Laravel 12 – Books & Authors API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Projekt API w Laravel 12 do zarządzania książkami i autorami.  
+Zawiera relacje many-to-many, paginację, filtrowanie, kolejki (Jobs), testy oraz uwierzytelnianie przez **Laravel Sanctum**.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🚀 Uruchomienie projektu (od zera)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 1️⃣ Klonowanie repozytorium
+```bash
+git clone https://github.com/patrykprzybylski922/300.codes.git
+cd 300.codes
+```
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+### 2️⃣ Zbudowanie i uruchomienie kontenerów
+```bash
+docker compose up -d --build
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 3️⃣ Konfiguracja środowiska (.env)
 
-## Laravel Sponsors
+Plik `.env` **nie jest wersjonowany** – należy go utworzyć na podstawie przykładu:
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```bash
+cp .env.example .env
+```
 
-### Premium Partners
+Wygeneruj klucz aplikacji:
+```bash
+docker compose exec app php artisan key:generate
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Minimalne, wymagane ustawienia DB (domyślne pod Dockera):
+```env
+DB_CONNECTION=mysql
+DB_HOST=db
+DB_PORT=3306
+DB_DATABASE=laravel
+DB_USERNAME=laravel
+DB_PASSWORD=secret
+```
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 4️⃣ Instalacja zależności PHP
+```bash
+docker compose exec app composer install
+```
 
-## Code of Conduct
+---
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 5️⃣ Migracje i dane startowe
+```bash
+docker compose exec app php artisan migrate
+docker compose exec app php artisan db:seed
+```
 
-## Security Vulnerabilities
+> Seeder `UserSeeder` tworzy użytkownika testowego (patrz sekcja Autoryzacja).
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+---
 
-## License
+### 6️⃣ Uruchomienie serwera Laravel (DEV)
+```bash
+docker compose exec app php artisan serve --host=0.0.0.0 --port=8000
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+
+## 🌍 Dostępy
+- API (Laravel): http://localhost:8000
+- phpMyAdmin: http://localhost:8084
+    - user: `laravel`
+    - password: `secret`
+
+---
+
+## 🔐 Autoryzacja (Laravel Sanctum)
+
+Endpointy modyfikujące dane (`POST` / `PUT /api/books`) są zabezpieczone **Sanctum**.
+
+---
+
+### 1️⃣ Utworzenie użytkownika (DEV)
+
+Projekt zawiera **seedera użytkownika**.
+
+Uruchomienie seedera:
+```bash
+docker compose exec app php artisan db:seed --class=UserSeeder
+```
+
+Seeder utworzy użytkownika:
+
+- **email:** `admin@test.pl`
+- **password:** `password`
+
+> Hasło jest hashowane i gotowe do użycia z Laravel Sanctum.
+
+---
+
+### 2️⃣ Logowanie i pobranie tokena
+`POST /api/login`
+
+```json
+{
+  "email": "admin@test.pl",
+  "password": "password"
+}
+```
+
+Response:
+```json
+{
+  "token": "1|xxxxxxxxxxxxxxxxxxxx"
+}
+```
+
+Token należy przekazywać w nagłówku:
+```
+Authorization: Bearer {TOKEN}
+```
+
+---
+
+## 📡 Dostępne endpointy API
+
+### 📘 Books
+
+| Metoda | Endpoint | Opis | Auth |
+|------|--------|------|------|
+| GET | `/api/books` | Lista książek z autorami | ❌ |
+| GET | `/api/books/{id}` | Szczegóły książki | ❌ |
+| POST | `/api/books` | Dodanie książki | ✅ Sanctum |
+| PUT | `/api/books/{id}` | Aktualizacja książki | ✅ Sanctum |
+| DELETE | `/api/books/{id}` | Usunięcie książki | ❌ |
+
+---
+
+### ✍️ Authors
+
+| Metoda | Endpoint | Opis |
+|------|--------|------|
+| GET | `/api/authors` | Lista autorów (z książkami) |
+| GET | `/api/authors/{id}` | Szczegóły autora |
+| POST | `/api/authors` | Dodanie autora |
+
+#### 🔎 Filtrowanie autorów
+```
+GET /api/authors?search=fragment_tytulu
+```
+
+Zwraca autorów, których **tytuły książek** zawierają podany ciąg znaków.
+
+---
+
+## 🧪 Testy
+
+Uruchomienie wszystkich testów:
+```bash
+docker compose exec app php artisan test
+```
+
+Wybrany test:
+```bash
+docker compose exec app php artisan test --filter=BookApiTest
+```
+
+---
+
+## ⚙️ Komendy Artisana
+
+### ➕ Utworzenie nowego autora (CLI)
+```bash
+docker compose exec app php artisan author:create
+```
+
+---
+
+## 🛑 Zatrzymanie projektu
+```bash
+docker compose down
+```
+
+⚠️ Zatrzymanie + usunięcie bazy danych:
+```bash
+docker compose down -v
+```
